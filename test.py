@@ -46,10 +46,9 @@ class S(BaseHTTPRequestHandler):
         test = beacons.insert_one(result)
         print(result)
         timestampstring = str(result['timestamp'])
-        timestampstring = timestampstring.replace(" ", "_")
-        os.system(f"mosquitto_pub -h 192.168.0.16 -d -t beacons/uuid -m {result['uuid']}")
-        os.system(f"mosquitto_pub -h 192.168.0.16 -d -t beacons/espid -m {result['espid']}")
-        os.system(f"mosquitto_pub -h 192.168.0.16 -d -t beacons/timestamp -m {timestampstring}")
+        timestampstring = [timestampstring.replace(" ", "_").replace(":", "-")]
+        thegreatstring = "{uuid:" + str(result["uuid"]) + ",espid:" + str(result["espid"]) + ",timestamp:" + str(timestampstring) + "}"
+        os.system(f"mosquitto_pub -h 192.168.0.16 -d -t beacons -m {thegreatstring}")
         
         self.wfile.write(self._html("Mise à jour'"))
         
