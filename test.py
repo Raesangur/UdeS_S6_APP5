@@ -3,7 +3,11 @@
 
 import datetime
 import argparse
+import os
 import pymongo
+import subprocess
+import sys
+import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
 
@@ -41,7 +45,11 @@ class S(BaseHTTPRequestHandler):
         result.update({"timestamp": datetime.datetime.now()})
         test = beacons.insert_one(result)
         print(result)
-
+        timestampstring = str(result['timestamp'])
+        timestampstring = timestampstring.replace(" ", "_")
+        os.system(f"mosquitto_pub -h 192.168.0.16 -d -t beacons/uuid -m {result['uuid']}")
+        os.system(f"mosquitto_pub -h 192.168.0.16 -d -t beacons/espid -m {result['espid']}")
+        os.system(f"mosquitto_pub -h 192.168.0.16 -d -t beacons/timestamp -m {timestampstring}")
         
         self.wfile.write(self._html("Mise à jour'"))
         
