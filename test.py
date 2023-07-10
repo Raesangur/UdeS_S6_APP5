@@ -1,32 +1,8 @@
-#!/usr/bin/env python
-"""
-Very simple HTTP server in python (Updated for Python 3.7)
-Usage:
-    ./dummy-web-server.py -h
-    ./dummy-web-server.py -l localhost -p 8000
-Send a GET request:
-    curl http://localhost:8000
-Send a HEAD request:
-    curl -I http://localhost:8000
-Send a POST request:
-    curl -d "foo=bar&bin=baz" http://localhost:8000
-This code is available for use under the MIT license.
-----
-Copyright 2021 Brad Montgomery
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and 
-associated documentation files (the "Software"), to deal in the Software without restriction, 
-including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
-subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all copies or substantial 
-portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT 
-LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
-OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.    
-"""
+#   curl http://localhost:8000
+#curl -d "espid=E1B4&uuid=864A" http://localhost:8000
+
 import argparse
+import pymongo
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
 
@@ -37,15 +13,18 @@ class S(BaseHTTPRequestHandler):
         self.end_headers()
 
     def _html(self, message):
-        """This just generates an HTML document that includes `message`
-        in the body. Override, or re-write this do do more interesting stuff.
-        """
-        content = f"<html><body><h1>{message}</h1></body></html>"
-        return content.encode("utf8")  # NOTE: must return a bytes object!
+        content = "<html><body><h1>{message}</h1><table border='1px solid black'>"
+        content += "<tr><th>espid </th> <th>uuid</th></tr>"
+        for x in beacons.find({},{ "_id":0 ,"espid": 1, "uuid": 1}):
+            espid = x["espid"][0]
+            uuid = x["uuid"][0]
+            content += f"<tr> <td>{espid}</td> <td>{uuid}</td></tr>"
+        content += "</table></body></html>"
+        return content.encode("utf8")
 
     def do_GET(self):
         self._set_headers()
-        self.wfile.write(self._html("hi!"))
+        self.wfile.write(self._html("Bon matin"))
 
     def do_HEAD(self):
         self._set_headers()
@@ -56,9 +35,11 @@ class S(BaseHTTPRequestHandler):
         data = self.rfile.read(int(self.headers['Content-Length']))
         data = data.decode()
         result = parse_qs(data, strict_parsing=True)
+        test = beacons.insert_one(result)
         print(result)
+
         
-        self.wfile.write(self._html("POST!"))
+        self.wfile.write(self._html("Mise à jour'"))
         
 
 
@@ -71,7 +52,10 @@ def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000):
 
 
 if __name__ == "__main__":
-
+    dbclient = pymongo.MongoClient("mongodb://localhost:27017/")
+    db = dbclient["UdeS_S6_APP5-beacons"]
+    beacons = db["beacons"]
+    beacons.drop()
     parser = argparse.ArgumentParser(description="Run a simple HTTP server")
     parser.add_argument(
         "-l",
