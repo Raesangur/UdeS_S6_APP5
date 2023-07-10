@@ -1,6 +1,7 @@
 #   curl http://localhost:8000
 #curl -d "espid=E1B4&uuid=864A" http://localhost:8000
 
+import datetime
 import argparse
 import pymongo
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -13,12 +14,13 @@ class S(BaseHTTPRequestHandler):
         self.end_headers()
 
     def _html(self, message):
-        content = "<html><body><h1>{message}</h1><table border='1px solid black'>"
-        content += "<tr><th>espid </th> <th>uuid</th></tr>"
+        content = f"<html><body><h1>{message}</h1><table border='1px solid black'>"
+        content += "<tr><th>espid </th> <th>uuid</th> <th>timestamp</th></tr>"
         for x in beacons.find({},{ "_id":0 ,"espid": 1, "uuid": 1}):
             espid = x["espid"][0]
             uuid = x["uuid"][0]
-            content += f"<tr> <td>{espid}</td> <td>{uuid}</td></tr>"
+            timestamp = x["timestamp"]
+            content += f"<tr> <td>{espid}</td> <td>{uuid}</td> <td>{timestamp}</td></tr>"
         content += "</table></body></html>"
         return content.encode("utf8")
 
@@ -35,6 +37,7 @@ class S(BaseHTTPRequestHandler):
         data = self.rfile.read(int(self.headers['Content-Length']))
         data = data.decode()
         result = parse_qs(data, strict_parsing=True)
+        result.update({"timestamp": datetime.datetime.now()})
         test = beacons.insert_one(result)
         print(result)
 
