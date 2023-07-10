@@ -16,7 +16,8 @@ class S(BaseHTTPRequestHandler):
     def _html(self, message):
         content = f"<html><body><h1>{message}</h1><table border='1px solid black'>"
         content += "<tr><th>espid </th> <th>uuid</th> <th>timestamp</th></tr>"
-        for x in beacons.find({},{ "_id":0 ,"espid": 1, "uuid": 1}):
+        for x in beacons.find({},{ "_id":0 ,"espid": 1, "uuid": 1, "timestamp":1}):
+            print(x)
             espid = x["espid"][0]
             uuid = x["uuid"][0]
             timestamp = x["timestamp"]
