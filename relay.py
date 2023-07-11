@@ -10,7 +10,27 @@ subscriber = subprocess.Popen(["mosquitto_sub", "-d", "-t", "beacons", "-h", "19
 
 dbclient = pymongo.MongoClient("mongodb://localhost:27017/")
 db = dbclient["UdeS_S6_APP5-relay"]
-beacons = db["beacons"]
+users = db["users"]
+users.drop()
+
+x = [
+        {"[0000febe-0000-1000-8000-00805f9b34fb]": {
+            "name": "Pascal-Emmanuel Lachance",
+            "phone": "123-456-7890",
+            "espid": "0000",
+            "timestamp": "0000"
+        }},
+        {"[0000fe9f-0000-1000-8000-00805f9b34fb]":
+        {
+            "name": "Philippe Gauthier",
+            "phone": "098-765-4321",
+            "espid": "0000",
+            "timestamp": "0000"
+        }}
+]
+
+users.insert_many(x)
+
 
 try:
     while(True):
@@ -18,16 +38,32 @@ try:
             line = line.decode().replace('\n', '')
             if '[' in line:
                 line = line.replace('{', "{\"").replace('}', "\"}").replace(':', "\":\"").replace(',', "\",\"")
-                #print(line)
                 data = json.loads(line)
-                print(data)
-                print(data["uuid"])
-                beacons["data"].insert_one(line)
-            
-        time.sleep(3)
+                uuid = data["uuid"]
+                #print(data)
+                
+                for x in users.find({},{ "_id": 0, uuid: 1}):
+                    if not bool(x):
+                        continue
 
-# Kill process (careful its sentient)
-except:
+                    y = x[uuid]
+                    y["timestamp"] = data["timestamp"]
+                    y["espid"] = data["espid"]
+
+                    #y = {data["uuid"]:y}
+                    
+                    users.find_one_and_update({uuid: {'$exists': True}}, {"$set": {uuid : y}}, upsert=False)
+
+                for x in users.find({},{ "_id": 0, uuid: 1}):
+                    if not bool(x):
+                        continue
+                    
+                    print (x)
+                    
+
+except Exception as e:
     print("REEEEEEEEEEEE")
+    print(str(e))
     subscriber.kill()
+    dbclient.close()
     sys.exit()
