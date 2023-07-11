@@ -18,8 +18,8 @@
 int scanTime = 5; //In seconds
 BLEScan *pBLEScan;
 
-const char* ssid = "Le Montagnais G";
-const char* password = "i983lodi093kd";
+const char* ssid = "SSD";
+const char* password = "Password";
 
 //Your Domain name with URL path or IP address with path
 const char* serverName = "http://192.168.0.16:8000";

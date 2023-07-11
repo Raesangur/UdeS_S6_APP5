@@ -14,13 +14,13 @@ users = db["users"]
 users.drop()
 
 x = [
-        {"[0000febe-0000-1000-8000-00805f9b34fb]": {
+        {"[insert-uuid-here]": {
             "name": "Pascal-Emmanuel Lachance",
             "phone": "123-456-7890",
             "espid": "0000",
             "timestamp": "0000"
         }},
-        {"[0000fe9f-0000-1000-8000-00805f9b34fb]":
+        {"[insert-uuid-here]":
         {
             "name": "Philippe Gauthier",
             "phone": "098-765-4321",
