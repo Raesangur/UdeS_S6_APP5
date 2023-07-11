@@ -4,6 +4,7 @@
 import datetime
 import argparse
 import pymongo
+import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
 
@@ -15,20 +16,23 @@ class S(BaseHTTPRequestHandler):
 
     def _html(self, message):
         content = f"<html><body><h1>{message}</h1><table border='1px solid black'>"
-        content += "<tr><th>User </th> <th>Phone </th> <th>uuid</th> <th>espid</th> <th>Last seen timestamp</th></tr>"
-        for x in beacons.find({},{ "_id":0 ,"espid": 1, "uuid": 1}):
-            user = x["user"][0]
-            phone = x["phone"][0]
-            uuid = x["uuid"][0]
-            espid = x["espid"][0]
+        content += "<tr><th>User </th> <th>Phone </th> <th>espid</th> <th>Last seen timestamp</th></tr>"
+        for x in beacons.find():
+            x = list(x.values())[1]
+            print(x)
+            
+            user = x["name"]
+            phone = x["phone"]
+            espid = x["espid"]
             timestamp = x["timestamp"]
-            content += f"<tr> <td>{user}</td> <td>{phone}</td> <td>{uuid}</td> <th>espid</th> <td>{timestamp}</td></tr>"
+            
+            content += f"<tr> <td>{user}</td> <td>{phone}</td> <th>{espid}</th> <td>{timestamp}</td></tr>"
         content += "</table></body></html>"
         return content.encode("utf8")
 
     def do_GET(self):
         self._set_headers()
-        self.wfile.write(self._html("Bon matin"))
+        self.wfile.write(self._html("Interface web cool pour l'archivage des derniers timestamps ou un utilisateur a ete vu"))
 
     def do_HEAD(self):
         self._set_headers()
@@ -58,11 +62,9 @@ def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000):
 
 try:
     if __name__ == "__main__":
-        subscriber = subprocess.Popen(["mosquitto_sub", "-d", "-t", "hello/world"], start_new_session=True)
-        
         dbclient = pymongo.MongoClient("mongodb://localhost:27017/")
-        db = dbclient["UdeS_S6_APP5-archive"]
-        beacons = db["archive"]
+        db = dbclient["UdeS_S6_APP5-relay"]
+        beacons = db["users"]
         #beacons.drop()
         parser = argparse.ArgumentParser(description="Run a simple HTTP server")
         parser.add_argument(
@@ -81,6 +83,5 @@ try:
         args = parser.parse_args()
         run(addr=args.listen, port=args.port)
 except KeyboardInterrupt:
-    subscriber.kill()
     dbclient.close()
     sys.exit()
